@@ -31,15 +31,15 @@ data "azurerm_log_analytics_workspace" "loganalytics" {
 ##Ensure to create first the Azure LogAnalytics Workspace
 resource "azurerm_template_deployment" "azure-arocluster" {
   #name (Required) Specifies the name of the template deployment. Changing this forces a new resource to be created.
-  #resource_group_name  (Required) The name of the ResourceGroup in which to create the template deployment
-  #template_body (Optional) Specifies the JSON definition for the template
   name  = var.aro_name
+
+  #resource_group_name  (Required) The name of the ResourceGroup in which to create the template deployment
   resource_group_name = var.aro_resource_group_name
 
   #File: Reads the contents of a file at the given path and returns them as a string
   template_body = file("${path.module}/azurerm_AROClusterTemplate.json")
 
-  #These key-value pairs are passed into the ARM template's parameters block
+  #These key-value pairs are provided as parameters to the ARM template
   parameters = {
     "clusterName": var.aro_name
     "location": var.aro_location
@@ -53,6 +53,7 @@ resource "azurerm_template_deployment" "azure-arocluster" {
     "peerVnetId": data.azurerm_virtual_network.peeringVnet.id
     "workspaceResourceId": data.azurerm_log_analytics_workspace.loganalytics.id
   }
+  
   #(Required) Specifies the mode that is used to deploy resources.
   #This value could be either Incremental or Complete.
   #Note that you will almost always want this be set to Incremental otherwise the deployment will destroy all Infrastructure not specified within the template, and Terraform will not be aware of this.
