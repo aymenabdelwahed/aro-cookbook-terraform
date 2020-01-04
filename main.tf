@@ -1,7 +1,3 @@
-#TOPIC: Manages a template deployment of resources
-#https://www.terraform.io/docs/providers/azurerm/r/template_deployment.html
-#https://docs.microsoft.com/en-us/azure/templates/microsoft.containerservice/2019-04-30/openshiftmanagedclusters
-
 terraform {
   required_version = ">= 0.12.0"
   required_providers {
