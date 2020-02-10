@@ -5,13 +5,28 @@
 terraform {
   required_version = ">= 0.12.0"
   required_providers {
-    azurerm = "~> 1.36.0"
+    azurerm = "~> 1.43.0"
   }
 }
 
 provider "azurerm" {
-    version = ">=1.36.0"
+    version = ">=1.43.0"
     subscription_id = var.subscription 
+}
+
+resource "random_password" "azure_aro_generated_secret" {
+  length                = 32
+  special               = true
+}
+
+data "azuread_service_principal" "azure_aro_service_principal" {
+  application_id = var.aro_aadClientId
+}
+
+resource "azuread_service_principal_password" "azure_aro_service_principal_secret" {
+  service_principal_id  = data.azuread_service_principal.azure_aro_service_principal.id
+  value                 = random_password.azure_aro_generated_secret.result
+  end_date              = timeadd(timestamp(), "44000h")
 }
 
 resource "azurerm_resource_group" "azure-aro-rg" {
@@ -49,7 +64,7 @@ resource "azurerm_template_deployment" "azure-arocluster" {
     "location": var.aro_location
     "aadTenantId": data.azurerm_client_config.current.tenant_id
     "aadClientId": var.aro_aadClientId
-    "aadClientSecret": var.aro_aadClientSecret
+    "aadClientSecret": random_password.azure_aro_generated_secret.result
     "aadCustomerAdminGroupId": var.aro_osa_admins_group_id
     "computeNodeType": var.aro_compute_nodesize
     "clusterVnetIPRange": var.aro_vnet_iprange
