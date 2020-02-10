@@ -1,0 +1,165 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location"
+      }
+    },
+    "clusterName": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique name for the cluster"
+      }
+    },
+    "masterNodeCount": {
+      "type": "int",
+      "defaultValue": 3,
+      "metadata": {
+        "description": "number of master nodes"
+      }
+    },
+    "computeNodeCount": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "number of compute nodes"
+      }
+    },
+    "infraNodeCount": {
+      "type": "int",
+      "defaultValue": 3,
+      "metadata": {
+        "description": "number of infra nodes"
+      }
+    },
+    "computeNodeType": {
+      "type": "string",
+      "defaultValue": "Standard_D4s_v3",
+      "metadata": {
+        "description": "VM Size of Worker nodes"
+      }
+    },
+    "aadTenantId": {
+      "type": "string",
+      "metadata": {
+        "description": "The ID of an Azure Active Directory tenant"
+      }
+    },
+    "aadClientId": {
+      "type": "string",
+      "metadata": {
+        "description": "The ID of an Azure Active Directory client application"
+      }
+    },
+    "aadClientSecret": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The secret of an Azure Active Directory client application"
+      }
+    },
+    "aadCustomerAdminGroupId": {
+      "type": "string",
+      "metadata": {
+        "description": "The Object ID of an Azure Active Directory Group that memberships will get synced into the OpenShift group 'osa-customer-admins'. If not specified, no cluster admin access will be granted."
+      }
+    },
+    "clusterVnetIPRange": {
+      "type": "string",
+      "metadata": {
+        "description": "The IP Range assigned to the Azure Red Hat OpenShift VNET."
+      }
+    },
+    "clusterSubnetIPRange": {
+      "type": "string",
+      "metadata": {
+        "description": "The IP Range assigned to the Azure Red Hat OpenShift Subnet."
+      }
+    },
+    "peerVnetId": {
+      "type": "string",
+      "metadata": {
+        "description": "The ObjectID of the VNET to peer Azure Red Hat OpenShift Cluster with."
+      }
+    },
+    "workspaceResourceId": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure ResourceId of an existing Log Analytics Workspace"
+      }
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "2019-10-27-preview",
+      "type": "Microsoft.ContainerService/openShiftManagedClusters",
+      "location": "[parameters('location')]",
+      "name": "[parameters('clusterName')]",
+      "tags": {
+        "environment": "production",
+	      "customer": "Albert Heijn"
+      },
+      "properties": {
+        "openShiftVersion": "v3.11",
+        "fqdn": "[concat(parameters('clusterName'), '.', parameters('location'), '.', 'cloudapp.azure.com')]",
+        "networkProfile": {
+          "vnetCidr": "[parameters('clusterVnetIPRange')]",
+          "peerVnetId": "[parameters('peerVnetId')]"
+        },
+        "authProfile": {
+          "identityProviders": [
+            {
+              "name": "Azure AD",
+              "provider": {
+                "kind": "AADIdentityProvider",
+                "tenantId": "[parameters('aadTenantId')]",
+                "clientId": "[parameters('aadClientId')]",
+                "secret": "[parameters('aadClientSecret')]",
+                "customerAdminGroupId": "[parameters('aadCustomerAdminGroupId')]"
+              }
+            }
+          ]
+        },
+        "masterPoolProfile": {
+          "name": "master",
+          "count": "[parameters('masterNodeCount')]",
+          "subnetCidr": "[parameters('clusterSubnetIPRange')]",
+          "vmSize": "Standard_D4s_v3",
+          "osType": "Linux",
+          "apiProperties": {
+            "privateAPIServer": true
+          }
+        },
+        "agentPoolProfiles": [
+          {
+            "role": "compute",
+            "name": "compute",
+            "count": "[parameters('computeNodeCount')]",
+            "subnetCidr": "[parameters('clusterSubnetIPRange')]",
+            "vmSize": "[parameters('computeNodeType')]",
+            "osType": "Linux"
+          },
+          {
+            "role": "infra",
+            "name": "infra",
+            "count": "[parameters('infraNodeCount')]",
+            "subnetCidr": "[parameters('clusterSubnetIPRange')]",
+            "vmSize": "Standard_D4s_v3",
+            "osType": "Linux"
+          }
+        ],
+        "routerProfiles": [
+          {
+            "name": "default"
+          }
+        ],
+        "monitorProfile": {
+          "workspaceResourceID": "[parameters('workspaceResourceId')]",
+          "enabled": true
+        }
+      }
+    }
+  ]
+}
