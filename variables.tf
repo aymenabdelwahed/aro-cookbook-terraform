@@ -24,10 +24,6 @@ variable "aro_aadClientId" {
   description = "The Application ID used by the Azure Red Hat OpenShift"
 }
 
-variable "aro_aadClientSecret" {
-  description = "The Application Secret used by the Azure Red Hat OpenShift"
-}
-
 variable "aro_osa_admins_group_id" {
     description = "The OSA Adminstrators Group ID"
 }

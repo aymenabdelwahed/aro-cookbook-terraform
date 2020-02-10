@@ -10,19 +10,21 @@ provider "azurerm" {
     subscription_id = var.subscription 
 }
 
-resource "random_password" "azure_aro_generated_secret" {
-  length                = 32
-  special               = true
-}
-
+#The Application Registration already provided by AzureAD Administrator
 data "azuread_service_principal" "azure_aro_service_principal" {
   application_id = var.aro_aadClientId
 }
 
+#Generate a New Secret and Assign it to the new ARO Cluster
 resource "azuread_service_principal_password" "azure_aro_service_principal_secret" {
   service_principal_id  = data.azuread_service_principal.azure_aro_service_principal.id
   value                 = random_password.azure_aro_generated_secret.result
   end_date              = timeadd(timestamp(), "44000h")
+}
+
+resource "random_password" "azure_aro_generated_secret" {
+  length                = 32
+  special               = true
 }
 
 resource "azurerm_resource_group" "azure-aro-rg" {
